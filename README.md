@@ -8,4 +8,4 @@ uANN requires dynamic memory, not all the microcontrollers have any heap impleme
 standard library, thats why this project assumes that is not available and uses uHeap (micro heap)
 as dependency.
 
- * uHeap from [microMiddlewares](git@github.com:josepablo134/microMiddlewares.git)
+ * uHeap from [microMiddlewares](https://github.com/josepablo134/microMiddlewares)
