@@ -1,3 +1,10 @@
+/*!
+*	@file		uANN.c
+*	@version	0.0
+*	@author		Josepablo Cruz Baas
+*	@date		09/07/2020
+*	@brief		micro Artificial Neural Network library definitions.
+**/
 #include "uANN.h"
 #include "uANN_config.h"
 #include "uHeap.h"
@@ -6,36 +13,45 @@
 
 #define umalloc( SIZE ) uheap_malloc( ann_uheap , SIZE )
 
+/// Dummy activation function that returns the input
 float dummy( float a ){
 	return a;//+1.0f;
 }
 
+/// Sigmoid function, also called logistic function
 float sigmoid( float a ){
 	float temp = exp( -1.0f * a );
 	temp = 1.0f + temp;
 	return (1.0f)/temp;
 }
 
+/// Table of activation function callbacks
 static ann_activation activation_cb_table[ ann_total_activation_functions ] = {
 	sigmoid,
 	dummy
 };
 
+/// Heap bytes array
 static unsigned char ann_uheap_buffer[ ANN_HEAP_MAX_SIZE ];
+
+/// Heap manager object
 static struct uheap* ann_uheap;
 
+/// Initialize and clear ann driver
 int ann_init( void ){
 	ann_uheap = uheap_init( ann_uheap_buffer , ANN_HEAP_MAX_SIZE );
 	if( !ann_uheap ){ return -1; }
 	return 0;
 }
 
+/// Create new ann_net structure
 struct ann_net* ann_net_create(){
 	struct ann_net* temp= (struct ann_net*) umalloc( sizeof( struct ann_layer ) );
 	ann_net_init( temp );
 	return temp;
 }
 
+/// Initialize and clear ann_net structure
 void ann_net_init( struct ann_net* ann ){
 	if( !ann ){ return; }
 	ann->input = 0x00;
@@ -43,12 +59,14 @@ void ann_net_init( struct ann_net* ann ){
 	ann->layers = 0;
 }
 
+/// Create new ann_layer structure
 struct ann_layer* ann_layer_create(){
 	struct ann_layer*	temp = (struct ann_layer*) umalloc( sizeof(struct ann_layer) );
 	ann_layer_init( temp );
 	return temp;
 }
 
+/// Initialize and clear ann_layer structure
 void ann_layer_init( struct ann_layer* ann_layer){
 	if( !ann_layer ){ return; }
 	ann_layer->_inputHolder = 0x00;
@@ -62,6 +80,7 @@ void ann_layer_init( struct ann_layer* ann_layer){
 	ann_layer->neurons = 0;
 }
 
+/// Connect a new layer with the last layer.
 int ann_net_push( struct ann_net* ann , struct ann_layer* layer ){
 	if( !ann ){ return -1; }
 	if( !layer ){ return -1; }
@@ -82,6 +101,7 @@ int ann_net_push( struct ann_net* ann , struct ann_layer* layer ){
 	return 0;
 }
 
+/// Disconnect the very last layer.
 struct ann_layer* ann_net_pop( struct ann_net* ann ){
 	struct ann_layer* lastLayer = 0x00;
 	struct ann_layer* layerActual = ann->input;
@@ -98,6 +118,7 @@ struct ann_layer* ann_net_pop( struct ann_net* ann ){
 	return layerActual;
 }
 
+/// Allocate memory for every layer data holder.
 int ann_alloc( struct ann_net* ann ){
 	if( !ann ){ return -1; }
 	if( !ann->layers ){ return -1; }
@@ -145,6 +166,7 @@ int ann_alloc( struct ann_net* ann ){
 	return 0;
 }
 
+/// Vector dot product
 static float vdot( float *vectA , float *vectB , unsigned int length ){
 	unsigned int counter;
 	float output=0.0;
@@ -154,6 +176,7 @@ static float vdot( float *vectA , float *vectB , unsigned int length ){
 	return output;
 }
 
+/// Propagate input data in the input layer through the ann.
 int ann_compute( struct ann_net* ann ){
 	if( !ann ){ return -1; }
 	struct ann_layer*	temp = ann->input;
