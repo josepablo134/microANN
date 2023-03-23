@@ -1,20 +1,3 @@
-# microANN
-
-Micro Artificial Neural Network is a minimalist ANN library to implement AI in microcontrollers
-
-This is work in progress.
-
-# Requirements
-
-uANN requires dynamic memory, not all the microcontrollers have any heap implemented on its
-standard library, thats why this project assumes that is not available and uses uHeap (micro heap)
-as dependency.
-
- * uHeap from [microMiddlewares](https://github.com/josepablo134/microMiddlewares)
-
-# Example of use
-
-```c
 #include "uANN.h"
 #include "uANN_config.h"
 
@@ -71,4 +54,3 @@ int main( int argc, char* argv[] ){
 	example();	
 	return 0;
 }
-```
