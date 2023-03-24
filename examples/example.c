@@ -1,32 +1,31 @@
 #include "uANN.h"
-#include "uANN_config.h"
 
 #include <stdio.h>
 	
 void example(){
-	struct ann_net*		ann;
-	struct ann_layer*	layer;
+	struct uANN_net*		uANN;
+	struct uANN_layer*	layer;
 	const float	input[2] = {1.0, 1.0};
 	float	output;
 
 	///	Initialize and clear private pointers
-	ann_init();
+	uANN_init();
 
-	ann = ann_net_create();
-	layer = ann_layer_create();
+	uANN = uANN_create();
+	layer = uANN_layer_create();
 
 	///	Setting layer properties
 	layer->inputLen = 2;
 	layer->neurons  = 1;
-	layer->activation = ann_sigmoid;
+	layer->activation = uANN_default_activation_function_id;
 
 	///	Pushing new layer over last layer
-	if( ann_net_push( ann , layer ) < 0 ){
+	if( uANN_push( uANN , layer ) < 0 ){
 		fprintf( stderr , "This layer is not compatible with last layer" );
 	}
 
 	///	Allocating memory for each layer
-	if( ann_alloc( ann ) < 0 ){
+	if( uANN_alloc( uANN ) < 0 ){
 		fprintf( stdout , "This neural netowork requires memory not available" );
 	}
 
@@ -41,7 +40,7 @@ void example(){
 	layer->_inputHolder[1] = input[1];
 
 	///	Propagate through neural network
-	ann_compute( ann );
+	uANN_compute( uANN );
 
 	///	The output of the neural network is now available
 	output = layer->_outputHolder[0];

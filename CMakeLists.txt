@@ -16,6 +16,7 @@ add_library(${COMPONENT_NAME} STATIC
 )
 
 target_include_directories(${COMPONENT_NAME} PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/include/
+		${CMAKE_CURRENT_LIST_DIR}/include
+		${CMAKE_CURRENT_LIST_DIR}/cfg
 )
 

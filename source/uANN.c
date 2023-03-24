@@ -1,136 +1,107 @@
 /*!
 *	@file		uANN.c
-*	@version	0.0
+*	@version	1.0.0
 *	@author		Josepablo Cruz Baas
-*	@date		09/07/2020
+*	@date		23/03/2023
 *	@brief		micro Artificial Neural Network library definitions.
 **/
+
 #include "uANN.h"
-#include "uANN_config.h"
-#include "uHeap.h"
 
-#include <math.h>
+#define umalloc( SIZE ) uANN_hook_malloc( SIZE )
 
-#define umalloc( SIZE ) uheap_malloc( ann_uheap , SIZE )
-
-/// Dummy activation function that returns the input
-float dummy( float a ){
-	return a;//+1.0f;
+/// Initialize and clear uANN driver
+int uANN_init( void ){
+	return uANN_hook_init();
 }
 
-/// Sigmoid function, also called logistic function
-float sigmoid( float a ){
-	float temp = exp( -1.0f * a );
-	temp = 1.0f + temp;
-	return (1.0f)/temp;
-}
-
-/// Table of activation function callbacks
-static ann_activation activation_cb_table[ ann_total_activation_functions ] = {
-	sigmoid,
-	dummy
-};
-
-/// Heap bytes array
-static unsigned char ann_uheap_buffer[ ANN_HEAP_MAX_SIZE ];
-
-/// Heap manager object
-static struct uheap* ann_uheap;
-
-/// Initialize and clear ann driver
-int ann_init( void ){
-	ann_uheap = uheap_init( ann_uheap_buffer , ANN_HEAP_MAX_SIZE );
-	if( !ann_uheap ){ return -1; }
-	return 0;
-}
-
-/// Create new ann_net structure
-struct ann_net* ann_net_create(){
-	struct ann_net* temp= (struct ann_net*) umalloc( sizeof( struct ann_layer ) );
-	ann_net_init( temp );
+/// Create new uANN_net structure
+uANN_net* uANN_create(){
+	uANN_net* temp= (struct uANN_net*) umalloc( sizeof( struct uANN_layer ) );
+	uANN_net_init( temp );
 	return temp;
 }
 
-/// Initialize and clear ann_net structure
-void ann_net_init( struct ann_net* ann ){
-	if( !ann ){ return; }
-	ann->input = 0x00;
-	ann->output = 0x00;
-	ann->layers = 0;
+/// Initialize and clear uANN_net structure
+void uANN_net_init( uANN_net* uANN ){
+	if( !uANN ){ return; }
+	uANN->input = 0x00;
+	uANN->output = 0x00;
+	uANN->layers = 0;
 }
 
-/// Create new ann_layer structure
-struct ann_layer* ann_layer_create(){
-	struct ann_layer*	temp = (struct ann_layer*) umalloc( sizeof(struct ann_layer) );
-	ann_layer_init( temp );
+/// Create new uANN_layer structure
+uANN_layer* uANN_layer_create(){
+	uANN_layer*	temp = (struct uANN_layer*) umalloc( sizeof(struct uANN_layer) );
+	uANN_layer_init( temp );
 	return temp;
 }
 
-/// Initialize and clear ann_layer structure
-void ann_layer_init( struct ann_layer* ann_layer){
-	if( !ann_layer ){ return; }
-	ann_layer->_inputHolder = 0x00;
-	ann_layer->_outputHolder = 0x00;
-	ann_layer->_weightHolder = 0x00;
-	ann_layer->_biasHolder = 0x00;
-	ann_layer->_next = 0x00;
+/// Initialize and clear uANN_layer structure
+void uANN_layer_init( uANN_layer* uANN_layer){
+	if( !uANN_layer ){ return; }
+	uANN_layer->_inputHolder = 0x00;
+	uANN_layer->_outputHolder = 0x00;
+	uANN_layer->_weightHolder = 0x00;
+	uANN_layer->_biasHolder = 0x00;
+	uANN_layer->_next = 0x00;
 	
-	ann_layer->activation = ann_sigmoid;
-	ann_layer->inputLen = 0;
-	ann_layer->neurons = 0;
+	uANN_layer->activation = uANN_default_activation_function_id;
+	uANN_layer->inputLen = 0;
+	uANN_layer->neurons = 0;
 }
 
 /// Connect a new layer with the last layer.
-int ann_net_push( struct ann_net* ann , struct ann_layer* layer ){
-	if( !ann ){ return -1; }
+int uANN_push( uANN_net* uANN , struct uANN_layer* layer ){
+	if( !uANN ){ return -1; }
 	if( !layer ){ return -1; }
 	
 	layer->_next = 0x00;
 
-	if( ann->output == 0x00 ){
-		ann->input = ann->output = layer;
+	if( uANN->output == 0x00 ){
+		uANN->input = uANN->output = layer;
 	}else{
-		if( ann->output->neurons != layer->inputLen ){
+		if( uANN->output->neurons != layer->inputLen ){
 			/// Incompatible dimension link!
 			return -1;
 		}
-		ann->output->_next = layer;
-		ann->output = layer;
+		uANN->output->_next = layer;
+		uANN->output = layer;
 	}
-	ann->layers++;
+	uANN->layers++;
 	return 0;
 }
 
 /// Disconnect the very last layer.
-struct ann_layer* ann_net_pop( struct ann_net* ann ){
-	struct ann_layer* lastLayer = 0x00;
-	struct ann_layer* layerActual = ann->input;
+uANN_layer* uANN_pop( struct uANN_net* uANN ){
+	uANN_layer* lastLayer = 0x00;
+	uANN_layer* layerActual = uANN->input;
 
-	while( layerActual != ann->output ){
+	while( layerActual != uANN->output ){
 		lastLayer = layerActual;
 		layerActual = layerActual->_next;
 	}
 
-	ann->output = lastLayer;
+	uANN->output = lastLayer;
 
-	ann->layers = (ann->layers)? ann->layers-1 : 0 ;
+	uANN->layers = (uANN->layers)? uANN->layers-1 : 0 ;
 
 	return layerActual;
 }
 
 /// Allocate memory for every layer data holder.
-int ann_alloc( struct ann_net* ann ){
-	if( !ann ){ return -1; }
-	if( !ann->layers ){ return -1; }
+int uANN_alloc( uANN_net* uANN ){
+	if( !uANN ){ return -1; }
+	if( !uANN->layers ){ return -1; }
 
-	unsigned int	localSize=0;
+	uANN_size	localSize=0;
 
-	struct ann_layer*	lastLayer = 0x00;
-	struct ann_layer*	temp = ann->input;
+	uANN_layer*	lastLayer = 0x00;
+	uANN_layer*	temp = uANN->input;
 		/// Input holders + Weight holders + Bias holders + Output holders
 		localSize = temp->inputLen + ( temp->inputLen * temp->neurons ) + temp->neurons + temp->neurons ;
 
-		float*	holders = (float*) umalloc( sizeof( float ) * localSize );
+		uANN_data*	holders = (uANN_data*) umalloc( sizeof( uANN_data ) * localSize );
 		if( !holders ){ return -1; }
 
 		temp->_inputHolder = holders;
@@ -148,7 +119,7 @@ int ann_alloc( struct ann_net* ann ){
 		//	in this case input holders are last layer output holders
 		localSize = ( temp->inputLen * temp->neurons ) + temp->neurons + temp->neurons ;
 
-		float*	holders = (float*) umalloc( sizeof( float ) * localSize );
+		uANN_data*	holders = (uANN_data*) umalloc( sizeof( uANN_data ) * localSize );
 		if( !holders ){ return -1; }
 
 		//	This holder is the same as the last layer output holder
@@ -167,28 +138,28 @@ int ann_alloc( struct ann_net* ann ){
 }
 
 /// Vector dot product
-static float vdot( float *vectA , float *vectB , unsigned int length ){
-	unsigned int counter;
-	float output=0.0;
+static uANN_data vdot( uANN_data *vectA , uANN_data *vectB , uANN_len length ){
+	uANN_len counter;
+	uANN_data output=0.0;
 	for( counter=0; counter<length; counter++ ){
 		output += vectA[counter] * vectB[counter];
 	}
 	return output;
 }
 
-/// Propagate input data in the input layer through the ann.
-int ann_compute( struct ann_net* ann ){
-	if( !ann ){ return -1; }
-	struct ann_layer*	temp = ann->input;
-	unsigned int	neuronCounter;
-	unsigned int	weightCounter;
+/// Propagate input data in the input layer through the uANN.
+int uANN_compute( uANN_net* uANN ){
+	if( !uANN ){ return -1; }
+	uANN_layer*	temp = uANN->input;
+	uANN_len	neuronCounter;
+	uANN_len	weightCounter;
 
 	while( temp ){
 		weightCounter= temp->inputLen;
 		for( neuronCounter=0; neuronCounter< temp->neurons; neuronCounter++ ){
 			/// activation( <input,weight> + bias )
 			temp->_outputHolder[ neuronCounter ] =
-				activation_cb_table[ temp->activation ](
+				uANN_activation_function_table[ temp->activation ](
 					vdot( temp->_inputHolder ,\
 					&(temp->_weightHolder[ (weightCounter)*neuronCounter ]),\
 					temp->inputLen ) +
